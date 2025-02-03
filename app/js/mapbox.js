@@ -10,14 +10,23 @@
 // ACCESS TOKEN OPTENU SUR
 // https://account.mapbox.com
 
+/** Légende de geolocalisations
+ *  Nom | latitude | longitude
+ * SPAWN  46.19406  6.159 
+ * 
+ * // note: dans l'utilisation de Mapbox GL JS il inverse les deux
+ * exemple: ligne 28 (long lat)
+ */ 
+
+
 mapboxgl.accessToken = 'pk.eyJ1IjoiYW1hcnVkZXYiLCJhIjoiY201djB3NDU4MDJ1bDJpczZ5YjhvNGo1NiJ9.FSN_HpllufFUxEbTGbQpMA';
 const map = new mapboxgl.Map({
     container: 'map',
-    zoom: 11.2,
-    pitch: 75,
+    zoom: 12.2,
+    pitch: 80,
     bearing: 100,
     center: [6.100971, 46.224546],
-    style: 'mapbox://styles/mapbox/standard', // Use the Mapbox Standard style
+    style: 'mapbox://styles/amarudev/cm5v18a2l00ov01pldzcw5nr4', // Use the Mapbox Standard style
     config: {
         // Initial configuration for the Mapbox Standard style set above. By default, its ID is `basemap`.
         basemap: {
@@ -26,6 +35,7 @@ const map = new mapboxgl.Map({
         }
     }
 });
+
 
 const size = 200;
 
@@ -36,8 +46,8 @@ const pulsingDot = {
     height: size,
     data: new Uint8Array(size * size * 4),
 
-    // When the layer is added to the map,
-    // get the rendering context for the map canvas.
+    // Quand ce calque est ajouté a la carte,
+    // il récupère le context pour le canvas de l'integration de la carte
     onAdd: function () {
         const canvas = document.createElement('canvas');
         canvas.width = this.width;

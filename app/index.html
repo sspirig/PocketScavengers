@@ -24,11 +24,11 @@
         <div class="upperPart">
             <h1>Pocket Scavengers</h1>
             <div>
-                <button class="btn" id="enterMap">Jouer</button>
+                <button onclick="openMap()" class="btn" id="enterMap">Jouer</button>
             </div>
         </div>
         <div class="lowerPart">
-            
+            https://docs.mapbox.com/mapbox-gl-js/example/locate-user/
         </div>
     </main>
     <footer>
@@ -38,5 +38,10 @@
         
         <span class="subtitle">Projet réalisé dans le cadre de l'atelier Mobile</span><b>&copy;CFPT Informatique</b>
     </footer>
+    <script>
+        function openMap(event) {
+            window.location.href = "map.html";
+        }
+    </script>
 </body>
 </html>

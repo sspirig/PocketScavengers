@@ -18,6 +18,16 @@
  * exemple: ligne 28 (long lat)
  */ 
 
+// export default class MapBoxManager {
+
+//     /**
+//      *
+//      */
+//     constructor() {
+//         super();
+        
+//     }
+// }
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiYW1hcnVkZXYiLCJhIjoiY201djB3NDU4MDJ1bDJpczZ5YjhvNGo1NiJ9.FSN_HpllufFUxEbTGbQpMA';
 const map = new mapboxgl.Map({

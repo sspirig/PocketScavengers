@@ -16,7 +16,117 @@
  * exemple: ligne 28 (long lat)
  */
 
+import NewPopup from "./uiFunctions.js";
+const menuBtn = document.getElementById("menu-btn");
+const devMenuBtn = document.querySelector("#dev_menu_btn");
+const menuBox = document.querySelector("#menu");
+devMenuBtn.addEventListener("click", ManageMenu);
+menuBtn.addEventListener("click", ManageMenu);
 
+function ManageMenu(event) {
+  let isOpening = event.target.className == "off";
+  let html = "";
+  if (isOpening) {
+    event.target.className = "on";
+    if (event.target.id == "menu-btn") {
+      
+      html = `<div class="menu-nav">
+        <button id="menu-btn-dashboard" class="on">Tableau de bord</button>
+        <button id="menu-btn-inventory" class="off">Inventaire</button>
+        <button id="menu-btn-locations" class="off">Points d'intérêts</button>
+      </div>
+      <div class="menu-content">
+        <h3>Tableau de bord</h3>
+        <div><b>⌕ Location</b></div>
+      </div>
+      `;
+      menuBox.innerHTML = html;
+      menuBox.style.display = "flex";
+      document.getElementById("menu-btn-dashboard").addEventListener("click", ManageSubMenu);
+      document.getElementById("menu-btn-inventory").addEventListener("click", ManageSubMenu);
+      document.getElementById("menu-btn-locations").addEventListener("click", ManageSubMenu);
+    }
+    else {
+      // dev menu
+        html += `
+      <div class="menu-content">
+        <button id="dev-btn-showAll">montrer toutes les poi</button>
+      </div>
+      `;
+      menuBox.innerHTML = html;
+      document.getElementById("dev-btn-showAll").addEventListener("click", e => {
+        
+      });
+    }
+  }
+  else {
+    event.target.className = "off";
+    menuBox.style.display = "none";
+  }
+
+
+}
+function ManageSubMenu(event) {
+  let isOpening = event.target.className == "off";
+  let html = "";
+  if (isOpening) {
+    console.log(event.target.id);
+    
+    switch (event.target.id) {
+      case "menu-btn-dashboard":
+        html = `<div class="menu-nav">
+          <button id="menu-btn-dashboard" class="on">Tableau de bord</button>
+          <button id="menu-btn-inventory" class="off">Inventaire</button>
+          <button id="menu-btn-locations" class="off">Points d'intérêts</button>
+        </div>
+        <div class="menu-content">
+          <h3>Tableau de bord</h3>
+          <div><b>⌕ Location</b></div>
+        </div>
+        `;
+        menuBox.innerHTML = html;
+        break;
+      case "menu-btn-inventory":
+          html = `<div class="menu-nav">
+          <button id="menu-btn-dashboard" class="off">Tableau de bord</button>
+          <button id="menu-btn-inventory" class="on">Inventaire</button>
+          <button id="menu-btn-locations" class="off">Points d'intérêts</button>
+        </div>
+        <div class="menu-content">
+          <h3>Inventaire</h3>
+          <h4>Capacité: 47/75</h4>
+          <div><b>2x ⬡ Pierre</b></div>
+          <div><b>45x ⬡ Bois</b></div>
+        </div>
+        `;
+        menuBox.innerHTML = html;
+        break;
+      case "menu-btn-locations":
+          html = `<div class="menu-nav">
+          <button id="menu-btn-dashboard" class="off">Tableau de bord</button>
+          <button id="menu-btn-inventory" class="off">Inventaire</button>
+          <button id="menu-btn-locations" class="on">Points d'intérêts</button>
+        </div>
+        <div class="menu-content">
+          <h3>Points de vente</h3>
+          <div><b>Manor | 46.20740389118474, 6.14242009988864</b></div>
+        </div>
+        `;
+        menuBox.innerHTML = html;
+        break;
+      default:
+        break;
+    }
+    document.getElementById("menu-btn-dashboard").addEventListener("click", ManageSubMenu);
+    document.getElementById("menu-btn-inventory").addEventListener("click", ManageSubMenu);
+    document.getElementById("menu-btn-locations").addEventListener("click", ManageSubMenu);
+  }
+  else {
+
+  }
+
+
+}
 mapboxgl.accessToken = "pk.eyJ1IjoiYW1hcnVkZXYiLCJhIjoiY201djB3NDU4MDJ1bDJpczZ5YjhvNGo1NiJ9.FSN_HpllufFUxEbTGbQpMA";
 let pos = {
 
@@ -283,9 +393,7 @@ function stopLocationTracking() {
   createLocationPermissionPopup();
 }
 
-function OpenMenu() {
-}
-document.getElementById("menu").addEventListener("click", OpenMenu)
+
 
 const size = 200;
 
@@ -469,17 +577,17 @@ function succesWatchPosition(position) {
     if (poiData != undefined && userAcceptedTrackLocation) {
       // Check distance du pulsingDot de l'user
       poiData.features.forEach(poi => {
+          
           const poiCoords = poi.geometry.coordinates;
           const distance = calculateDistance(pos, poiCoords);
           
           // Update visibility based on proximity 
           poi.properties.visible = distance < 15;
-          // if (distance < 15) {
-          //   console.info("PulsingDot found at ", pos.lat, ", ", pos.long);
-          // }
-          // else {
-          //   console.info("PulsingDot is far from user: distance: ",distance,"; pos: ", pos.lat, ", ", pos.long);
-          // }
+          if (distance < 15) {
+            // Discovered new ressource
+            
+            NewPopup("ressource-found", poi);
+          }
           
       });
     }

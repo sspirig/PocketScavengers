@@ -6,6 +6,7 @@
     <title>PocketScavengers | Carte</title>
     <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.9.2/mapbox-gl.css" rel="stylesheet">
+    <link rel="manifest" href="/manifest.webmanifest">
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.9.2/mapbox-gl.js"></script>
     <style>
         body {
@@ -41,30 +42,84 @@
             user-select: none;
         }
 
-        .devBtn {
+        button#dev_menu_btn, button#menu-btn {
             position: relative;
             z-index: 4;
             margin: 10px;
             padding: 8px 12px;
-            background-color: #fff;
-            border: 1px solid #ccc;
+
             border-radius: 4px;
             cursor: pointer;
         }
         
-        .devBtn:hover {
-            background-color: #f0f0f0;
+        .off {
+            background-color: #aec4c3;
+            border: 2px solid #7e9493;
+        }
+
+
+        .off:hover, .on:hover {
+            transition: 1s;
+        }
+        
+        button#dev_menu_btn.on, button#menu-btn.on {
+            background-color: #424242;
+            color: aqua;
         }
 
         .location-permission-popup {
             position: absolute;
+        }
+
+        #menu {
+            display: none;
+            flex-direction: column;
+            color: aliceblue;
+            background-color: rgba(42, 42, 42, 0.808);
+            border-radius: 8px;
+            width: 45vw;
+            position: relative;
+            z-index: 4;
+            margin: 10px;
+            padding: 0.2rem;
+            padding-top: 0.4rem;
+        }
+        .menu-nav button.off {
+            margin: 0.4rem;
+            padding: 0.4rem;
+            color: #35d1c4;
+            background-color: #424242;
+            border: 2px solid #3c5c59;
+            border-radius: 10px;
+        }
+        .menu-nav button.on {
+            margin: 0.4rem;
+            padding: 0.4rem;
+            font-weight: bold;
+            color: black;
+            background-color: #35d1c4;
+            border: 2px solid #2ffff5;
+            border-radius: 10px;
+        }
+
+        .menu-content {
+            display: flex;
+            align-items: flex-start;
+            flex-direction: column;
+            padding-bottom: 0.4rem;
+        }
+
+        #menu h3, #menu h5, #menu h4 {
+            color: rgb(194, 250, 245);
+
         }
     </style>
 </head>
 
 <body>
     <div class="global-box">
-        <button class="devBtn" id="dev_menu_btn">dev menu</button><button class="devBtn" id="menu">☰</button>
+        <button class="off" id="dev_menu_btn">dev menu</button><button class="off" id="menu-btn">☰</button>
+        <div id="menu"></div>
         <div id="map"></div>
         <script type="module" src="js/main.js"></script>
     </div>

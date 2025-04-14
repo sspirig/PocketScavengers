@@ -37,7 +37,8 @@ function ManageMenu(event) {
       </div>
       <div class="menu-content">
         <h3>Tableau de bord</h3>
-        <div><b>⌕ Location</b></div>
+        <div><b>⌕ Location </b><span id="menu-dashboard-location"></span</div>
+        <div><button id="menu-btn-logout-quit" class="off">Quitter PocketScavengers</button></div>
       </div>
       `;
       menuBox.innerHTML = html;
@@ -50,7 +51,7 @@ function ManageMenu(event) {
       // dev menu
         html += `
       <div class="menu-content">
-        <button id="dev-btn-showAll">montrer toutes les poi</button>
+        <button id="dev-btn-showAll">montrer tout les poi</button>
       </div>
       `;
       menuBox.innerHTML = html;
@@ -193,6 +194,109 @@ for (const feature of geojson.features) {
      //code from step 8 will go here
 }
 
+// Event called on load of the map
+map.on("load", () => {
+  // Ajoute geolocate control à la map
+  map.addControl(GeolocateControl);
+  
+  if (localStorage.getItem("userAcceptedTrackLocation") == "true") {
+    let dateNow = new Date();
+    if (Date.parse(localStorage.getItem("TrackLocationDateEnd")) > Date.parse(dateNow.getDay())) {
+      // si le temps entre 1970 et aujourd'hui est plus long que le temps entre 19170 et la date de fin de l'acceptation du track de la location du user
+      global_box.className = "global_box";
+      startLocationTracking();
+    }
+    else {
+      localStorage.setItem("userAcceptedTrackLocation", false);
+      localStorage.removeItem("TrackLocationDateEnd");
+      createLocationPermissionPopup(); 
+    }
+  }
+  else {
+    createLocationPermissionPopup(); 
+  }
+  
+
+  map.addImage('pulsing-dot', pulsingDot, { pixelRatio: 2 });
+  
+  // Add your POIs as a source
+  map.addSource('poi-source', {
+      'type': 'geojson',
+      'data': {
+          'type': 'FeatureCollection',
+          'features': [
+              // Your POI points here
+              {
+                  'type': 'Feature',
+                  'properties': {
+                      'id': 'poi1',
+                      'visible': false
+                  },
+                  'geometry': {
+                      'type': 'Point', 
+                      'coordinates': [6.15073765963906, 46.19406]
+                  }
+              },
+              // Add more POIs as needed
+          ]
+      }
+  });
+  
+  // Add a layer for the pulsing dots
+  map.addLayer({
+      'id': 'pulsing-poi-layer',
+      'type': 'symbol',
+      'source': 'poi-source',
+      'layout': {
+          'icon-image': 'pulsing-dot',
+          'icon-allow-overlap': true,
+          // Only show POIs marked as visible
+          'visibility': 'visible'
+      },
+      'filter': ['==', 'visible', true]
+  });
+
+     // Add click event to the pulsing dot layer
+
+});
+// Event called when the pulsing-poi-layer a été cliqué (minage de ressource)
+map.on('click', 'pulsing-poi-layer', (e) => {
+  // Get the properties of the clicked feature
+  const features = map.queryRenderedFeatures(e.point, { 
+    layers: ['pulsing-poi-layer'] 
+  });
+  
+  if (!features.length) {
+    return;
+  }
+  
+  const feature = features[0];
+  
+  // récupère une random ressource
+  //GetRandomRessource()
+  let rnd = parseInt(Math.random() * 10);
+  // Create a popup
+  new mapboxgl.Popup()
+    .setLngLat(feature.geometry.coordinates)
+    .setHTML(`<div style="display: flex; justify-content: center; flex-direction: column;"><h3>Pulsing Dot Cliqué</h3> <h2 id="count" style="color: crimson;">${rnd}<h2>`)
+    .addTo(map);
+  
+  // You can also perform other actions when the dot is clicked
+  console.log('Pulsing dot clicked:', feature.properties);
+  
+  // Example: Call a custom function
+  onDotClick(feature);
+});
+
+// Change cursor to pointer when hovering over the dot
+map.on('mouseenter', 'pulsing-poi-layer', () => {
+  map.getCanvas().style.cursor = 'pointer';
+});
+
+map.on('mouseleave', 'pulsing-poi-layer', () => {
+  map.getCanvas().style.cursor = '';
+});
+
 // Create location permission popup
 function createLocationPermissionPopup() {
   const popup = document.createElement("div")
@@ -268,7 +372,17 @@ function createLocationPermissionPopup() {
     document.body.removeChild(popup)
     global_box.className = "global_box";
     userAcceptedTrackLocation = true;
+    localStorage.setItem("userAcceptedTrackLocation", true);
+    localStorage.setItem("TrackLocationDateEnd", )
     startLocationTracking();
+
+    Date.prototype.addDays = function(days) {
+      var date = new Date(this.valueOf());
+      date.setDate(date.getDate() + days);
+      return date;
+    }
+    var date = new Date();
+    console.log("new date", date.addDays(5));
   })
 
   document.getElementById("deny-location").addEventListener("click", () => {
@@ -469,9 +583,24 @@ const pulsingDot = {
 map.on("load", () => {
   // Ajoute geolocate control à la map
   map.addControl(GeolocateControl);
-
-  createLocationPermissionPopup();
- 
+  
+  if (localStorage.getItem("userAcceptedTrackLocation") == "true") {
+    let dateNow = new Date();
+    if (Date.parse(localStorage.getItem("TrackLocationDateEnd")) > Date.parse(dateNow.getDay())) {
+      // si le temps entre 1970 et aujourd'hui est plus long que le temps entre 19170 et la date de fin de l'acceptation du track de la location du user
+      global_box.className = "global_box";
+      startLocationTracking();
+    }
+    else {
+      localStorage.setItem("userAcceptedTrackLocation", false);
+      localStorage.removeItem("TrackLocationDateEnd");
+      createLocationPermissionPopup(); 
+    }
+  }
+  else {
+    createLocationPermissionPopup(); 
+  }
+  
 
   map.addImage('pulsing-dot', pulsingDot, { pixelRatio: 2 });
   

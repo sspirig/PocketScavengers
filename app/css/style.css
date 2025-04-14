@@ -1,9 +1,9 @@
-button {
+/* button {
     position: absolute;
     left: 5%;
     top: 5%;
     z-index: 0;
-}
+} */
 /* .on {
     background-color: silver;
     position: absolute;
@@ -13,3 +13,8 @@ button {
 .off {
     
 } */
+
+#menu-dashboard-location {
+    font-style: italic;
+    color: rgb(114, 128, 128);
+}

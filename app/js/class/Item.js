@@ -1,8 +1,36 @@
 export default class Item {
-    constructor(name, type, unitPrice) {
+    name;
+    type;
+    backgroundGradient;
+    backgroundList;
+    constructor(name, type) {
       this.name = name;
       this.type = type;
-      this.unitPrice = unitPrice;
+
+      switch (type) {
+        case "landmarkTrophy": // récompense quand on arrive a un endroit précis a geneve
+            this.unitPrice = "not_buyable";
+            this.backgroundGradient = "linear-gradient(#FFDD00, #DE9B096e)";
+            break;
+        case "park": // récompense quand on arrive a un endroit précis a geneve
+            this.unitPrice = "15";
+            this.backgroundGradient = "linear-gradient(#02CC1D, #3019006e)";
+            break;
+        case "aquatic":
+            this.unitPrice = "30";
+            this.backgroundGradient = "linear-gradient(#021DCC, #6287CC6e)";
+            break;
+        case "common":
+            this.unitPrice = "5";
+            this.backgroundGradient = "linear-gradient(#02ccbb, #0161596e)";
+            break;
+        case "rare":
+            this.unitPrice = "444";
+            this.backgroundGradient = "linear-gradient(#00FFEE, #EB23916e)";
+            break;
+        default:    
+            break;
+      }
     }
   
     /**
@@ -20,4 +48,16 @@ export default class Item {
         }
       
     }
+
+    // GetColorsFromRessourceType(need) {
+    //     switch (need) {
+    //         case "CollectingRessource":
+
+    //         return this.backgroundGradient;
+
+    //         case "ListingRessource":
+
+    //         break;
+    //     }
+    // }
   }

@@ -16,12 +16,188 @@
  * exemple: ligne 28 (long lat)
  */
 
+import Item from "./class/Item.js";
 import NewPopup from "./uiFunctions.js";
 const menuBtn = document.getElementById("menu-btn");
 const devMenuBtn = document.querySelector("#dev_menu_btn");
 const menuBox = document.querySelector("#menu");
 devMenuBtn.addEventListener("click", ManageMenu);
 menuBtn.addEventListener("click", ManageMenu);
+let poiData;
+let watchId;
+
+mapboxgl.accessToken = "pk.eyJ1IjoiYW1hcnVkZXYiLCJhIjoiY201djB3NDU4MDJ1bDJpczZ5YjhvNGo1NiJ9.FSN_HpllufFUxEbTGbQpMA";
+let pos = {
+
+};
+const currentPos = {
+  long: null,
+  lat: null,
+}
+let userAcceptedTrackLocation = false; // definit si le joueur a accepté le tracking de la localisation
+const global_box = document.querySelector(".global-box");
+
+const map = new mapboxgl.Map({
+  container: "map",
+  zoom: 12.2,
+  pitch: 80,
+  bearing: 100,
+  center: [6.100971, 46.224546],
+  style: "mapbox://styles/amarudev/cm7t6xc99008j01r14ht5g9qx",
+  config: {
+    // Initial configuration for the Mapbox Standard style set above. By default, its ID is `basemap`.
+    basemap: {
+      // Here, we're disabling all of the 3D layers such as landmarks, trees, and 3D extrusions.
+      show3dObjects: false,
+    },
+  },
+});
+
+const geojson = {
+  type: 'FeatureCollection',
+  features: [
+    {
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: [6.129, 46.19406]
+      },
+      properties: {
+        title: 'Mapbox',
+        description: 'Washington, D.C.'
+      }
+    },
+    {
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: [6.159821, 46.190971]
+      },
+      properties: {
+        title: 'Mapbox',
+        description: 'San Francisco, California'
+      }
+    }
+  ]
+};
+
+// add markers to map
+for (const feature of geojson.features) {
+
+  // code from step 7-1 will go here
+
+  // make a marker for each feature and add to the map
+  new mapboxgl.Marker().setLngLat(feature.geometry.coordinates).addTo(map);  // Replace this line with code from step 7-2
+
+  //code from step 8 will go here
+}
+
+// Event called on load of the map
+map.on("load", () => {
+  // Ajoute geolocate control à la map
+  map.addControl(GeolocateControl);
+
+  if (localStorage.getItem("userAcceptedTrackLocation") == "true") {
+    let dateNow = new Date();
+    if (Date.parse(localStorage.getItem("TrackLocationDateEnd")) > Date.parse(dateNow.getDay())) {
+      // si le temps entre 1970 et aujourd'hui est plus long que le temps entre 19170 et la date de fin de l'acceptation du track de la location du user
+      global_box.className = "global_box";
+      console.info("starting location tracking...");
+      userAcceptedTrackLocation = true;
+      startLocationTracking();
+    }
+    else {
+      localStorage.setItem("userAcceptedTrackLocation", false);
+      localStorage.removeItem("TrackLocationDateEnd");
+      console.info("starting location permission popup with TrackLocationDateEnd removed ...");
+      createLocationPermissionPopup();
+    }
+  }
+  else {
+    console.info("starting location permission popup...");
+    createLocationPermissionPopup();
+  }
+
+
+  map.addImage('pulsing-dot', pulsingDot, { pixelRatio: 2 });
+
+  // Add your POIs as a source
+  map.addSource('poi-source', {
+    'type': 'geojson',
+    'data': {
+      'type': 'FeatureCollection',
+      'features': [
+        // Your POI points here
+        {
+          'type': 'Feature',
+          'properties': {
+            'id': 'poi1',
+            'visible': false
+          },
+          'geometry': {
+            'type': 'Point',
+            'coordinates': [6.15073765963906, 46.19406]
+          }
+        },
+        // Add more POIs as needed
+      ]
+    }
+  });
+
+  // Add a layer for the pulsing dots
+  map.addLayer({
+    'id': 'pulsing-poi-layer',
+    'type': 'symbol',
+    'source': 'poi-source',
+    'layout': {
+      'icon-image': 'pulsing-dot',
+      'icon-allow-overlap': true,
+      // Only show POIs marked as visible
+      'visibility': 'visible'
+    },
+    'filter': ['==', 'visible', true]
+  });
+
+  // Add click event to the pulsing dot layer
+
+});
+// Event called when the pulsing-poi-layer a été cliqué (minage de ressource)
+map.on('click', 'pulsing-poi-layer', (e) => {
+  // Get the properties of the clicked feature
+  const features = map.queryRenderedFeatures(e.point, {
+    layers: ['pulsing-poi-layer']
+  });
+
+  if (!features.length) {
+    return;
+  }
+
+  const feature = features[0];
+
+  // récupère une random ressource
+  //GetRandomRessource()
+  let rnd = parseInt(Math.random() * 10);
+  // Create a popup
+  new mapboxgl.Popup()
+    .setLngLat(feature.geometry.coordinates)
+    .setHTML(`<div style="display: flex; justify-content: center; flex-direction: column;"><h3>Pulsing Dot Cliqué</h3> <h2 id="count" style="color: crimson;">${rnd}<h2>`)
+    .addTo(map);
+
+  // You can also perform other actions when the dot is clicked
+  console.log('Pulsing dot clicked:', feature.properties);
+
+  // Example: Call a custom function
+  onDotClick(feature);
+});
+
+// Change cursor to pointer when hovering over the dot
+map.on('mouseenter', 'pulsing-poi-layer', () => {
+  map.getCanvas().style.cursor = 'pointer';
+});
+
+map.on('mouseleave', 'pulsing-poi-layer', () => {
+  map.getCanvas().style.cursor = '';
+});
 
 function ManageMenu(event) {
   let isOpening = event.target.className == "off";
@@ -29,7 +205,7 @@ function ManageMenu(event) {
   if (isOpening) {
     event.target.className = "on";
     if (event.target.id == "menu-btn") {
-      
+
       html = `<div class="menu-nav">
         <button id="menu-btn-dashboard" class="on">Tableau de bord</button>
         <button id="menu-btn-inventory" class="off">Inventaire</button>
@@ -49,14 +225,14 @@ function ManageMenu(event) {
     }
     else {
       // dev menu
-        html += `
+      html += `
       <div class="menu-content">
         <button id="dev-btn-showAll">montrer tout les poi</button>
       </div>
       `;
       menuBox.innerHTML = html;
       document.getElementById("dev-btn-showAll").addEventListener("click", e => {
-        
+
       });
     }
   }
@@ -72,7 +248,7 @@ function ManageSubMenu(event) {
   let html = "";
   if (isOpening) {
     console.log(event.target.id);
-    
+
     switch (event.target.id) {
       case "menu-btn-dashboard":
         html = `<div class="menu-nav">
@@ -88,7 +264,7 @@ function ManageSubMenu(event) {
         menuBox.innerHTML = html;
         break;
       case "menu-btn-inventory":
-          html = `<div class="menu-nav">
+        html = `<div class="menu-nav">
           <button id="menu-btn-dashboard" class="off">Tableau de bord</button>
           <button id="menu-btn-inventory" class="on">Inventaire</button>
           <button id="menu-btn-locations" class="off">Points d'intérêts</button>
@@ -103,7 +279,7 @@ function ManageSubMenu(event) {
         menuBox.innerHTML = html;
         break;
       case "menu-btn-locations":
-          html = `<div class="menu-nav">
+        html = `<div class="menu-nav">
           <button id="menu-btn-dashboard" class="off">Tableau de bord</button>
           <button id="menu-btn-inventory" class="off">Inventaire</button>
           <button id="menu-btn-locations" class="on">Points d'intérêts</button>
@@ -128,174 +304,6 @@ function ManageSubMenu(event) {
 
 
 }
-mapboxgl.accessToken = "pk.eyJ1IjoiYW1hcnVkZXYiLCJhIjoiY201djB3NDU4MDJ1bDJpczZ5YjhvNGo1NiJ9.FSN_HpllufFUxEbTGbQpMA";
-let pos = {
-
-};
-const currentPos = {
-  long: null,
-  lat: null,
-}
-let userAcceptedTrackLocation = false; // definit si le joueur a accepté le tracking de la localisation
-const global_box = document.querySelector(".global-box");
-
-const map = new mapboxgl.Map({
-  container: "map",
-  zoom: 12.2,
-  pitch: 80,
-  bearing: 100,
-  center: [6.100971, 46.224546],
-  style: "mapbox://styles/amarudev/cm7t6xc99008j01r14ht5g9qx", 
-  config: {
-    // Initial configuration for the Mapbox Standard style set above. By default, its ID is `basemap`.
-    basemap: {
-      // Here, we're disabling all of the 3D layers such as landmarks, trees, and 3D extrusions.
-      show3dObjects: false,
-    },
-  },
-});
-
-const geojson = {
-    type: 'FeatureCollection',
-    features: [
-      {
-        type: 'Feature',
-        geometry: {
-          type: 'Point',
-          coordinates: [6.129, 46.19406]
-        },
-        properties: {
-          title: 'Mapbox',
-          description: 'Washington, D.C.'
-        }
-      },
-      {
-        type: 'Feature',
-        geometry: {
-          type: 'Point',
-          coordinates: [ 6.159821, 46.190971]
-        },
-        properties: {
-          title: 'Mapbox',
-          description: 'San Francisco, California'
-        }
-      }
-    ]
-  };
-
-// add markers to map
-for (const feature of geojson.features) {
-  
-    // code from step 7-1 will go here
-  
-    // make a marker for each feature and add to the map
-    new mapboxgl.Marker().setLngLat(feature.geometry.coordinates).addTo(map);  // Replace this line with code from step 7-2
-  
-     //code from step 8 will go here
-}
-
-// Event called on load of the map
-map.on("load", () => {
-  // Ajoute geolocate control à la map
-  map.addControl(GeolocateControl);
-  
-  if (localStorage.getItem("userAcceptedTrackLocation") == "true") {
-    let dateNow = new Date();
-    if (Date.parse(localStorage.getItem("TrackLocationDateEnd")) > Date.parse(dateNow.getDay())) {
-      // si le temps entre 1970 et aujourd'hui est plus long que le temps entre 19170 et la date de fin de l'acceptation du track de la location du user
-      global_box.className = "global_box";
-      startLocationTracking();
-    }
-    else {
-      localStorage.setItem("userAcceptedTrackLocation", false);
-      localStorage.removeItem("TrackLocationDateEnd");
-      createLocationPermissionPopup(); 
-    }
-  }
-  else {
-    createLocationPermissionPopup(); 
-  }
-  
-
-  map.addImage('pulsing-dot', pulsingDot, { pixelRatio: 2 });
-  
-  // Add your POIs as a source
-  map.addSource('poi-source', {
-      'type': 'geojson',
-      'data': {
-          'type': 'FeatureCollection',
-          'features': [
-              // Your POI points here
-              {
-                  'type': 'Feature',
-                  'properties': {
-                      'id': 'poi1',
-                      'visible': false
-                  },
-                  'geometry': {
-                      'type': 'Point', 
-                      'coordinates': [6.15073765963906, 46.19406]
-                  }
-              },
-              // Add more POIs as needed
-          ]
-      }
-  });
-  
-  // Add a layer for the pulsing dots
-  map.addLayer({
-      'id': 'pulsing-poi-layer',
-      'type': 'symbol',
-      'source': 'poi-source',
-      'layout': {
-          'icon-image': 'pulsing-dot',
-          'icon-allow-overlap': true,
-          // Only show POIs marked as visible
-          'visibility': 'visible'
-      },
-      'filter': ['==', 'visible', true]
-  });
-
-     // Add click event to the pulsing dot layer
-
-});
-// Event called when the pulsing-poi-layer a été cliqué (minage de ressource)
-map.on('click', 'pulsing-poi-layer', (e) => {
-  // Get the properties of the clicked feature
-  const features = map.queryRenderedFeatures(e.point, { 
-    layers: ['pulsing-poi-layer'] 
-  });
-  
-  if (!features.length) {
-    return;
-  }
-  
-  const feature = features[0];
-  
-  // récupère une random ressource
-  //GetRandomRessource()
-  let rnd = parseInt(Math.random() * 10);
-  // Create a popup
-  new mapboxgl.Popup()
-    .setLngLat(feature.geometry.coordinates)
-    .setHTML(`<div style="display: flex; justify-content: center; flex-direction: column;"><h3>Pulsing Dot Cliqué</h3> <h2 id="count" style="color: crimson;">${rnd}<h2>`)
-    .addTo(map);
-  
-  // You can also perform other actions when the dot is clicked
-  console.log('Pulsing dot clicked:', feature.properties);
-  
-  // Example: Call a custom function
-  onDotClick(feature);
-});
-
-// Change cursor to pointer when hovering over the dot
-map.on('mouseenter', 'pulsing-poi-layer', () => {
-  map.getCanvas().style.cursor = 'pointer';
-});
-
-map.on('mouseleave', 'pulsing-poi-layer', () => {
-  map.getCanvas().style.cursor = '';
-});
 
 // Create location permission popup
 function createLocationPermissionPopup() {
@@ -312,7 +320,7 @@ function createLocationPermissionPopup() {
             </div>
         </div>
     `
-  
+
   // Ajoute des style pour le popup
   const style = document.createElement("style")
   style.textContent += `
@@ -367,30 +375,36 @@ function createLocationPermissionPopup() {
   document.head.appendChild(style)
   document.body.appendChild(popup)
 
-  // Add event listeners
-  document.getElementById("allow-location").addEventListener("click", () => {
-    document.body.removeChild(popup)
-    global_box.className = "global_box";
-    userAcceptedTrackLocation = true;
-    localStorage.setItem("userAcceptedTrackLocation", true);
-    localStorage.setItem("TrackLocationDateEnd", )
-    startLocationTracking();
+  setTimeout(() => {
+    // Add event listeners
+    document.querySelector("#allow-location").addEventListener("click", () => {
+      console.log("TEST");
+      
+      document.body.removeChild(popup)
+      global_box.className = "global_box";
+      userAcceptedTrackLocation = true;
+      localStorage.setItem("userAcceptedTrackLocation", true);
+      localStorage.setItem("TrackLocationDateEnd", new Date());
+      startLocationTracking();
 
-    Date.prototype.addDays = function(days) {
-      var date = new Date(this.valueOf());
-      date.setDate(date.getDate() + days);
-      return date;
-    }
-    var date = new Date();
-    console.log("new date", date.addDays(5));
-  })
+      Date.prototype.addDays = function (days) {
+        var date = new Date(this.valueOf());
+        date.setDate(date.getDate() + days);
+        return date;
+      }
+      var date = new Date();
+      console.log("new date", date.addDays(5));
+    })
 
-  document.getElementById("deny-location").addEventListener("click", () => {
-    document.body.removeChild(popup)
-    global_box.className = "global_box";
-    geolocation_errorCallback()
-    
-  })
+    document.querySelector("#deny-location").addEventListener("click", () => {
+      document.body.removeChild(popup);
+      global_box.className = "global_box";
+      geolocation_errorCallback();
+
+    })
+  }, 1000);
+
+
 }
 
 const GeolocateControl = new mapboxgl.GeolocateControl({
@@ -402,7 +416,46 @@ const GeolocateControl = new mapboxgl.GeolocateControl({
   // Draw an arrow next to the location dot to indicate which direction the device is heading.
   showUserHeading: true,
 })
+function succesWatchPosition() {
 
+  try {
+    // Get the current POI data
+    poiData = map.getSource('poi-source')._data;
+
+  } catch (error) {
+
+  }
+  if (poiData != undefined && userAcceptedTrackLocation) {
+    // Check distance du pulsingDot de l'user
+    poiData.features.forEach(poi => {
+
+      const poiCoords = poi.geometry.coordinates;
+      const distance = calculateDistance(pos, poiCoords);
+      // console.log("poiCoords: ", poiCoords);
+      // console.info("poi.properties.visible: ", poi.properties.visible);
+      
+      
+      // Update visibility based on proximity 
+      poi.properties.visible = distance < 15;
+      if (distance < 15) {
+        // Discovered new ressource
+
+        NewPopup("ressource-found", poi);
+      }
+
+    });
+  }
+
+  try {
+
+    // Update the source data
+    map.getSource('poi-source').setData(poiData);
+
+  } catch (error) {
+
+  }
+
+}
 
 // Function to update user position on map
 function updateUserPositionOnMap(position) {
@@ -489,7 +542,7 @@ function geolocation_errorCallback(error) {
   alert(message)
 
   console.error("Geolocation error:", error)
-  
+
   window.location.href = "index.html";
 }
 
@@ -513,161 +566,121 @@ const size = 200;
 
 // Create a pulsing dot icon
 const pulsingDot = {
-    width: size,
-    height: size,
-    data: new Uint8Array(size * size * 4),
+  width: size,
+  height: size,
+  data: new Uint8Array(size * size * 4),
 
-    // When the layer is added to the map,
-    // get the rendering context for the map canvas.
-    onAdd: function () {
-        const canvas = document.createElement('canvas');
-        canvas.width = this.width;
-        canvas.height = this.height;
-        this.context = canvas.getContext('2d');
-    },
+  // When the layer is added to the map,
+  // get the rendering context for the map canvas.
+  onAdd: function () {
+    const canvas = document.createElement('canvas');
+    canvas.width = this.width;
+    canvas.height = this.height;
+    this.context = canvas.getContext('2d');
+  },
 
-    // Call once before every frame where the icon will be used.
-    render: function () {
-        const duration = 1000;
-        const t = (performance.now() % duration) / duration;
+  // Call once before every frame where the icon will be used.
+  render: function () {
+    const duration = 1000;
+    const t = (performance.now() % duration) / duration;
 
-        const radius = (size / 2) * 0.3;
-        const outerRadius = (size / 2) * 0.7 * t + radius;
-        const context = this.context;
+    const radius = (size / 2) * 0.3;
+    const outerRadius = (size / 2) * 0.7 * t + radius;
+    const context = this.context;
 
-        // Draw the outer circle.
-        context.clearRect(0, 0, this.width, this.height);
-        context.beginPath();
-        context.arc(
-            this.width / 2,
-            this.height / 2,
-            outerRadius,
-            0,
-            Math.PI * 2
-        );
-        context.fillStyle = `rgba(69, 255, 239, ${1 - t})`;
-        context.fill();
-        
-        // Draw the inner circle.
-        context.beginPath();
-        context.arc(
-            this.width / 2,
-            this.height / 2,
-            radius,
-            0,
-            Math.PI * 2
-        );
-        context.fillStyle = 'black';
-        context.strokeStyle = 'aqua';
-        context.lineWidth = 2 + 4 * (1 - t);
-        context.fill();
-        context.stroke();
+    // Draw the outer circle.
+    context.clearRect(0, 0, this.width, this.height);
+    context.beginPath();
+    context.arc(
+      this.width / 2,
+      this.height / 2,
+      outerRadius,
+      0,
+      Math.PI * 2
+    );
+    context.fillStyle = `rgba(69, 255, 239, ${1 - t})`;
+    context.fill();
 
-        // Update this image's data with data from the canvas.
-        this.data = context.getImageData(
-            0,
-            0,
-            this.width,
-            this.height,
-        ).data;
+    // Draw the inner circle.
+    context.beginPath();
+    context.arc(
+      this.width / 2,
+      this.height / 2,
+      radius,
+      0,
+      Math.PI * 2
+    );
+    context.fillStyle = 'black';
+    context.strokeStyle = 'aqua';
+    context.lineWidth = 2 + 4 * (1 - t);
+    context.fill();
+    context.stroke();
 
-        // Continuously repaint the map, resulting
-        // in the smooth animation of the dot.
-        map.triggerRepaint();
+    // Update this image's data with data from the canvas.
+    this.data = context.getImageData(
+      0,
+      0,
+      this.width,
+      this.height,
+    ).data;
 
-        // Return `true` to let the map know that the image was updated.
-        return true;
-    }
+    // Continuously repaint the map, resulting
+    // in the smooth animation of the dot.
+    map.triggerRepaint();
+
+    // Return `true` to let the map know that the image was updated.
+    return true;
+  }
 };
 
 map.on("load", () => {
-  // Ajoute geolocate control à la map
-  map.addControl(GeolocateControl);
-  
-  if (localStorage.getItem("userAcceptedTrackLocation") == "true") {
-    let dateNow = new Date();
-    if (Date.parse(localStorage.getItem("TrackLocationDateEnd")) > Date.parse(dateNow.getDay())) {
-      // si le temps entre 1970 et aujourd'hui est plus long que le temps entre 19170 et la date de fin de l'acceptation du track de la location du user
-      global_box.className = "global_box";
-      startLocationTracking();
-    }
-    else {
-      localStorage.setItem("userAcceptedTrackLocation", false);
-      localStorage.removeItem("TrackLocationDateEnd");
-      createLocationPermissionPopup(); 
-    }
-  }
-  else {
-    createLocationPermissionPopup(); 
-  }
-  
 
-  map.addImage('pulsing-dot', pulsingDot, { pixelRatio: 2 });
-  
-  // Add your POIs as a source
-  map.addSource('poi-source', {
-      'type': 'geojson',
-      'data': {
-          'type': 'FeatureCollection',
-          'features': [
-              // Your POI points here
-              {
-                  'type': 'Feature',
-                  'properties': {
-                      'id': 'poi1',
-                      'visible': false
-                  },
-                  'geometry': {
-                      'type': 'Point', 
-                      'coordinates': [6.15073765963906, 46.19406]
-                  }
-              },
-              // Add more POIs as needed
-          ]
-      }
-  });
-  
-  // Add a layer for the pulsing dots
-  map.addLayer({
-      'id': 'pulsing-poi-layer',
-      'type': 'symbol',
-      'source': 'poi-source',
-      'layout': {
-          'icon-image': 'pulsing-dot',
-          'icon-allow-overlap': true,
-          // Only show POIs marked as visible
-          'visibility': 'visible'
-      },
-      'filter': ['==', 'visible', true]
-  });
+  map.addImage('pulsing-dot-RESSOURCE', pulsingDot, { pixelRatio: 2 });
+  map.addImage('pulsing-dot-LANDMARK=waterJet ', pulsingDot, { pixelRatio: 2 });
 
-     // Add click event to the pulsing dot layer
 
 });
 map.on('click', 'pulsing-poi-layer', (e) => {
   // Get the properties of the clicked feature
-  const features = map.queryRenderedFeatures(e.point, { 
-    layers: ['pulsing-poi-layer'] 
+  const features = map.queryRenderedFeatures(e.point, {
+    layers: ['pulsing-poi-layer']
   });
-  
+
   if (!features.length) {
     return;
   }
-  
+
   const feature = features[0];
-  
+
   // récupère une random ressource
   //GetRandomRessource()
   let rnd = parseInt(Math.random() * 10);
+  let name = "ressource"; // doit pouvoir recuperer le nom sur le pulsing-poi
+
+  // en cas de non type donné par la localisation (exemple au bord du lac ou du rhone ça serait type "aquatic" et faudra le definir des que le poi sera placer aléatoirement)
+  let rndType = parseInt(Math.random() * 3);
+  switch (rndType) {
+    case 1:
+      
+      break;
+  
+    default:
+      break;
+  }
+  let item = new Item();
+  
+
   // Create a popup
   new mapboxgl.Popup()
     .setLngLat(feature.geometry.coordinates)
-    .setHTML(`<div style="display: flex; justify-content: center; flex-direction: column;"><h3>Pulsing Dot Cliqué</h3> <h2 id="count" style="color: crimson;">${rnd}<h2>`)
+    .setHTML(`<div style="display: flex; justify-content: center; flex-direction: column;"><h3 style="background: ${item.backgroundGradient}">Pulsing Dot Cliqué</h3> <h2 id="count" style="color: crimson;">${rnd}<h2>`)
     .addTo(map);
-  
+
+
+
   // You can also perform other actions when the dot is clicked
   console.log('Pulsing dot clicked:', feature.properties);
-  
+
   // Example: Call a custom function
   onDotClick(feature);
 });
@@ -686,51 +699,41 @@ map.on('mouseleave', 'pulsing-poi-layer', () => {
 function onDotClick(feature) {
   // RECOLTER LA RESSOURCE du pulsingDot
   //alert(`You clicked on ${feature.properties.title}`);
-  
+
 }
 
-let poiData;
-// Get user location
-let id = navigator.geolocation.watchPosition(succesWatchPosition);
 
-function succesWatchPosition(position) {
-  
-    try {
-        // Get the current POI data
-      poiData = map.getSource('poi-source')._data;
-      
-    } catch (error) {
-  
+
+function waitForSourceAndStartWatching(map, sourceId) {
+  const interval = setInterval(() => {
+    if (map.isStyleLoaded()) {
+      const source = map.getSource(sourceId);
+      if (source) {
+        clearInterval(interval);
+        console.log(`[INFO] Source "${sourceId}" trouvée. Initialisation de la géolocalisation.`);
+        startWatching();
+      }
     }
-  
-    if (poiData != undefined && userAcceptedTrackLocation) {
-      // Check distance du pulsingDot de l'user
-      poiData.features.forEach(poi => {
-          
-          const poiCoords = poi.geometry.coordinates;
-          const distance = calculateDistance(pos, poiCoords);
-          
-          // Update visibility based on proximity 
-          poi.properties.visible = distance < 15;
-          if (distance < 15) {
-            // Discovered new ressource
-            
-            NewPopup("ressource-found", poi);
-          }
-          
-      });
-    }
-  
-    try {
-  
-      // Update the source data
-      map.getSource('poi-source').setData(poiData);
-      
-    } catch (error) {
-      
-    }
-  
+  }, 250); // Vérifie toutes les 250ms
 }
+
+function startWatching() {
+    // Ce code ne s'exécute que lorsque la carte est chargée ET que 'poi-source' est disponible
+    // navigator.geolocation.watchPosition(onSuccess, onError, {
+    //   enableHighAccuracy: true,
+    //   maximumAge: 10000,
+    //   timeout: 20000,
+    // });
+    watchId = navigator.geolocation.watchPosition(succesWatchPosition, (error) => {
+      console.log("code: ", error.code);
+    }, (error) => {
+      console.log("code: ", error.code);
+    });
+}
+
+waitForSourceAndStartWatching(map, 'poi-source', startWatching);
+
+
 
 
 /**
@@ -739,34 +742,34 @@ function succesWatchPosition(position) {
  * @param {object} coord2 
  */
 function calculateDistance(coord1, coord2) {
- // Rayon de la terre en kilometres
- const R = 6371;
+  // Rayon de la terre en kilometres
+  const R = 6371;
 
- let lat1 = coord1.lat;
- let lon1 = coord1.long;
+  let lat1 = coord1.lat;
+  let lon1 = coord1.long;
 
- let lat2 = coord2[1];
- let lon2 = coord2[0];
- // Convertit degrees en radians
- const dLat = (lat2 - lat1) * Math.PI / 180;
- const dLon = (lon2 - lon1) * Math.PI / 180;
- 
- // Convertit latitude en radians
- const lat1Rad = lat1 * Math.PI / 180;
- const lat2Rad = lat2 * Math.PI / 180;
- 
- // Haversine formula => 
- // ( utilisée pour calculer la distance entre deux lat long, il faut d'abord recuperer les radians des lat)
- const a = 
-   Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-   Math.cos(lat1Rad) * Math.cos(lat2Rad) * 
-   Math.sin(dLon / 2) * Math.sin(dLon / 2);
- 
- const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
- let distance = R * c; // distance en kilometres
- distance *= 1000; // Convertit km en metres
+  let lat2 = coord2[1];
+  let lon2 = coord2[0];
+  // Convertit degrees en radians
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
 
- return distance;
+  // Convertit latitude en radians
+  const lat1Rad = lat1 * Math.PI / 180;
+  const lat2Rad = lat2 * Math.PI / 180;
+
+  // Haversine formula => 
+  // ( utilisée pour calculer la distance entre deux lat long, il faut d'abord recuperer les radians des lat)
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1Rad) * Math.cos(lat2Rad) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  let distance = R * c; // distance en kilometres
+  distance *= 1000; // Convertit km en metres
+
+  return distance;
 }
 
 let locateIntervalId;

@@ -130,8 +130,30 @@ map.on("load", () => {
         // Your POI points here
         {
           'type': 'Feature',
-          'properties': {
+          'properties': { 
             'id': 'poi1',
+            'visible': false
+          },
+          'geometry': {
+            'type': 'Point',
+            'coordinates': [6.15073765963906, 46.19406]
+          }
+        },
+        {
+          'type': 'Feature',
+          'properties': { 
+            'id': 'poi2',
+            'visible': false
+          },
+          'geometry': {
+            'type': 'Point',
+            'coordinates': [6.15073765963906, 46.19406]
+          }
+        },
+        {
+          'type': 'Feature',
+          'properties': { 
+            'id': 'poi3',
             'visible': false
           },
           'geometry': {
@@ -435,9 +457,10 @@ function succesWatchPosition() {
       // console.info("poi.properties.visible: ", poi.properties.visible);
       
       
-      // Update visibility based on proximity 
-      poi.properties.visible = distance < 15;
-      if (distance < 15) {
+      // Update visibility based on proximity
+ 
+      poi.properties.visible = distance < 30;
+      if (poi.properties.visible) {
         // Discovered new ressource
 
         NewPopup("ressource-found", poi);
@@ -456,14 +479,22 @@ function succesWatchPosition() {
   }
 
 }
-
+let lastPos = {
+  lat: 0,
+  long: 0
+};
 // Function to update user position on map
 function updateUserPositionOnMap(position) {
   pos = {
     lat: position.coords.latitude,
     long: position.coords.longitude,
   }
-
+  if (lastPos.lat != pos.lat || lastPos.long != pos.long) {
+    lastPos.lat = pos.lat;
+    lastPos.long = pos.long;
+    console.log(pos);
+  }
+  
   UpdateCurrentGeolocation(pos)
   //console.log(`Location found at ${pos.lat} ; ${pos.long}`)
 
@@ -546,19 +577,19 @@ function geolocation_errorCallback(error) {
   window.location.href = "index.html";
 }
 
-function geolocation_successCallback(position) {
-  updateUserPositionOnMap(position)
-}
+// function geolocation_successCallback(position) {
+//   updateUserPositionOnMap(position)
+// }
 
-// Stop tracking location
-function stopLocationTracking() {
-  if (locateIntervalId) {
-    navigator.geolocation.clearWatch(locateIntervalId)
-    locateIntervalId = null
-  }
+// // Stop tracking location
+// function stopLocationTracking() {
+//   if (locateIntervalId) {
+//     navigator.geolocation.clearWatch(locateIntervalId)
+//     locateIntervalId = null
+//   }
 
-  createLocationPermissionPopup();
-}
+//   createLocationPermissionPopup();
+// }
 
 
 

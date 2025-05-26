@@ -8,7 +8,7 @@
 export default class GameSave {
 
 
-
+    inventory;
 
 
     /**

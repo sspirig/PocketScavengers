@@ -37,7 +37,7 @@ export default class Item {
      * Function for display
      * @param {null | number} count 
      */
-    displayShopInfo(count = null) {
+    displayInfo(count = null) {
         if (count == null) {
             // for selling
             return `${this.type} ${this.name} - ${this.unitPrice}$/unité`;

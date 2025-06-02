@@ -1,14 +1,16 @@
 export default class Item {
+    count;
     name;
     type;
     backgroundGradient;
     backgroundList;
-    constructor(name, type) {
+    constructor(count, name, type) {
+      this.count = count;
       this.name = name;
       this.type = type;
 
       switch (type) {
-        case "landmarkTrophy": // récompense quand on arrive a un endroit précis a geneve
+        case "landmarkTrophy": // récompense quand on arrive a un endroit précis a geneve ( pas implémenté)
             this.unitPrice = "not_buyable";
             this.backgroundGradient = "linear-gradient(#FFDD00, #DE9B096e)";
             break;
@@ -33,31 +35,4 @@ export default class Item {
       }
     }
   
-    /**
-     * Function for display
-     * @param {null | number} count 
-     */
-    displayInfo(count = null) {
-        if (count == null) {
-            // for selling
-            return `${this.type} ${this.name} - ${this.unitPrice}$/unité`;
-        }
-        else {
-            // for showing
-            return `${count}x - ${this.type} ${this.name}`;
-        }
-      
-    }
-
-    // GetColorsFromRessourceType(need) {
-    //     switch (need) {
-    //         case "CollectingRessource":
-
-    //         return this.backgroundGradient;
-
-    //         case "ListingRessource":
-
-    //         break;
-    //     }
-    // }
   }

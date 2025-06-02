@@ -1,12 +1,27 @@
 
 body {
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     flex-direction: column;
     align-items: center;
+    height: 100vh;
+    background: linear-gradient(0deg, #049e84, #2c3331);
+    color: rgb(240, 255, 255);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 header {
 
+}
+a {
+    color: rgb(26, 243, 171);
+}
+button {
+    background-color: #04332b;
+    padding: 0.5rem;
+    border-radius: 8px;
+    border-color: #07a777;
+    color: rgb(224, 241, 239);
+    font-weight: bold;
 }
 
 header ul {
@@ -26,7 +41,8 @@ header ul {
 .upperPart {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: center;
+    margin-bottom: 3rem;
 }
 .lowerPart {
     display: flex;
@@ -36,7 +52,9 @@ header ul {
 
 footer {
     display: flex;
+    margin-top: 1rem;
+    box-sizing: 0;
     align-items: center;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-end;
 }

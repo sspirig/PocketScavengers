@@ -15,17 +15,16 @@
  * // RAPPEL: dans l'utilisation de Mapbox GL JS il inverse les deux
  * exemple: ligne 28 (long lat)
  */
-
 import Item from "./class/Item.js";
-import NewPopup from "./uiFunctions.js";
+import GameSave from "./class/GameSave.js";
+
 const menuBtn = document.getElementById("menu-btn");
-const devMenuBtn = document.querySelector("#dev_menu_btn");
 const menuBox = document.querySelector("#menu");
-devMenuBtn.addEventListener("click", ManageMenu);
 menuBtn.addEventListener("click", ManageMenu);
 let poiData;
-let watchId;
 
+let gameSave = new GameSave();
+let watchId;
 mapboxgl.accessToken = "pk.eyJ1IjoiYW1hcnVkZXYiLCJhIjoiY201djB3NDU4MDJ1bDJpczZ5YjhvNGo1NiJ9.FSN_HpllufFUxEbTGbQpMA";
 let pos = {
 
@@ -34,6 +33,19 @@ const currentPos = {
   long: null,
   lat: null,
 }
+const GeolocateControl = new mapboxgl.GeolocateControl({
+  positionOptions: {
+    enableHighAccuracy: true,
+  },
+  // When active the map will receive updates to the device's location as it changes.
+  trackUserLocation: true,
+  // Draw an arrow next to the location dot to indicate which direction the device is heading.
+  showUserHeading: true,
+});
+let lastPos = {
+  lat: 0,
+  long: 0
+};
 let userAcceptedTrackLocation = false; // definit si le joueur a accepté le tracking de la localisation
 const global_box = document.querySelector(".global-box");
 
@@ -84,12 +96,8 @@ const geojson = {
 // add markers to map
 for (const feature of geojson.features) {
 
-  // code from step 7-1 will go here
+  new mapboxgl.Marker().setLngLat(feature.geometry.coordinates).addTo(map);
 
-  // make a marker for each feature and add to the map
-  new mapboxgl.Marker().setLngLat(feature.geometry.coordinates).addTo(map);  // Replace this line with code from step 7-2
-
-  //code from step 8 will go here
 }
 
 // Event called on load of the map
@@ -128,40 +136,117 @@ map.on("load", () => {
       'type': 'FeatureCollection',
       'features': [
         // Your POI points here
+        // train  46.204015, 6.136018 usine nightclub 46.2014954, 6.1232619 junction riverfront 46.2188511, 6.1132958 balexert 46.2304327, 6.1088849 airport
         {
           'type': 'Feature',
           'properties': { 
-            'id': 'poi1',
+            'id': 'poi_history-and-art-museum',
             'visible': false
           },
           'geometry': {
             'type': 'Point',
-            'coordinates': [6.15073765963906, 46.19406]
+            'coordinates': [6.151609449799484, 46.1993399999998]
           }
         },
         {
           'type': 'Feature',
           'properties': { 
-            'id': 'poi2',
+            'id': 'poi_rive-rondabout',
             'visible': false
           },
           'geometry': {
             'type': 'Point',
-            'coordinates': [6.15073765963906, 46.19406]
+            'coordinates': [6.153409449799496, 46.201619999999714]
           }
         },
         {
           'type': 'Feature',
           'properties': { 
-            'id': 'poi3',
+            'id': 'poi_saint-pierre-cathedral',
             'visible': false
           },
           'geometry': {
             'type': 'Point',
-            'coordinates': [6.15073765963906, 46.19406]
+            'coordinates': [6.1487432, 46.2010851]
           }
         },
-        // Add more POIs as needed
+        {
+          'type': 'Feature',
+          'properties': { 
+            'id': 'poi_water-jet',
+            'visible': false
+          },
+          'geometry': {
+            'type': 'Point',
+            'coordinates': [6.156029449799513, 46.207419999999495]
+          }
+        },
+        {
+          'type': 'Feature',
+          'properties': { 
+            'id': 'poi_motive-power-building',
+            'visible': false
+          },
+          'geometry': {
+            'type': 'Point',
+            'coordinates': [6.1365861, 46.2046062]
+          }
+        },
+        {
+          'type': 'Feature',
+          'properties': { 
+            'id': 'poi_usine-nightclub',
+            'visible': false
+          },
+          'geometry': {
+            'type': 'Point',
+            'coordinates': [6.136018, 46.204015]
+          }
+        },
+        {
+          'type': 'Feature',
+          'properties': { 
+            'id': 'poi_balexert-mall',
+            'visible': false
+          },
+          'geometry': {
+            'type': 'Point',
+            'coordinates': [6.1132958, 46.2188511], 
+          }
+        },
+        {
+          'type': 'Feature',
+          'properties': { 
+            'id': 'poi_jonction-riverfront',
+            'visible': false
+          },
+          'geometry': {
+            'type': 'Point',
+            'coordinates': [6.1232619, 46.2014954]
+          }
+        },
+        {
+          'type': 'Feature',
+          'properties': { 
+            'id': 'poi_reformers-wall',
+            'visible': false
+          },
+          'geometry': {
+            'type': 'Point',
+            'coordinates': [6.1459101, 46.2002435]
+          }
+        },
+        {
+          'type': 'Feature',
+          'properties': { 
+            'id': 'poi_cornavin-train-station',
+            'visible': false
+          },
+          'geometry': {
+            'type': 'Point',
+            'coordinates': [6.1430596, 46.2106357]
+          }
+        },
       ]
     }
   });
@@ -198,11 +283,22 @@ map.on('click', 'pulsing-poi-layer', (e) => {
 
   // récupère une random ressource
   //GetRandomRessource()
-  let rnd = parseInt(Math.random() * 10);
+  let count = parseInt(Math.random() * 10 ) + 1;
+
+  let type = null;
+  let valid = parseInt(Math.random() * 100 );
+  let validHtml = "";
+  if (valid > 40) {
+    validHtml = `<h1 style="color: lime;">Ressource gagnée !<h1>`;
+    type = parseInt(Math.random() * 4 ) + 1;
+    
+  } else {
+    validHtml = `<h1 style="color: crimson;">Ressource perdue !<h1>`;
+  }
   // Create a popup
   new mapboxgl.Popup()
     .setLngLat(feature.geometry.coordinates)
-    .setHTML(`<div style="display: flex; justify-content: center; flex-direction: column;"><h3>Pulsing Dot Cliqué</h3> <h2 id="count" style="color: crimson;">${rnd}<h2>`)
+    .setHTML(`<div style="display: flex; justify-content: center; flex-direction: column;">`+validHtml+`<h3>Pulsing Dot Cliqué</h3> <h2 id="count" style="color: crimson;">${rnd}</h2>x`)
     .addTo(map);
 
   // You can also perform other actions when the dot is clicked
@@ -245,18 +341,6 @@ function ManageMenu(event) {
       document.getElementById("menu-btn-inventory").addEventListener("click", ManageSubMenu);
       document.getElementById("menu-btn-locations").addEventListener("click", ManageSubMenu);
     }
-    else {
-      // dev menu
-      html += `
-      <div class="menu-content">
-        <button id="dev-btn-showAll">montrer tout les poi</button>
-      </div>
-      `;
-      menuBox.innerHTML = html;
-      document.getElementById("dev-btn-showAll").addEventListener("click", e => {
-
-      });
-    }
   }
   else {
     event.target.className = "off";
@@ -280,10 +364,16 @@ function ManageSubMenu(event) {
         </div>
         <div class="menu-content">
           <h3>Tableau de bord</h3>
-          <div><b>⌕ Location</b></div>
+          <div><b>⌕ Location : </b>${currentPos.lat} ${currentPos.long}</div>
+          <div><button id="menu-btn-import-gameSave" class="off">Télécharger sauvegarde</button></div>
+          <div><button id="menu-btn-import-gameSave" class="off">Importer sauvegarde.json</button></div>
+          <div><button id="menu-btn-quit" class="off">Quitter PocketScavengers</button></div>
+          <div
         </div>
         `;
         menuBox.innerHTML = html;
+        document.getElementById("menu-btn-import-gameSave").addEventListener("click", ImportGameSave);
+        document.getElementById("menu-btn-quit").addEventListener("click", QuitGame);
         break;
       case "menu-btn-inventory":
         html = `<div class="menu-nav">
@@ -292,10 +382,7 @@ function ManageSubMenu(event) {
           <button id="menu-btn-locations" class="off">Points d'intérêts</button>
         </div>
         <div class="menu-content">
-          <h3>Inventaire</h3>
-          <h4>Capacité: 47/75</h4>
-          <div><b>2x ⬡ Pierre</b></div>
-          <div><b>45x ⬡ Bois</b></div>
+          `+gameSave.GetInventory()+`
         </div>
         `;
         menuBox.innerHTML = html;
@@ -307,8 +394,8 @@ function ManageSubMenu(event) {
           <button id="menu-btn-locations" class="on">Points d'intérêts</button>
         </div>
         <div class="menu-content">
-          <h3>Points de vente</h3>
-          <div><b>Manor | 46.20740389118474, 6.14242009988864</b></div>
+        `+gameSave.GetVisitedPois()+`
+          
         </div>
         `;
         menuBox.innerHTML = html;
@@ -319,6 +406,7 @@ function ManageSubMenu(event) {
     document.getElementById("menu-btn-dashboard").addEventListener("click", ManageSubMenu);
     document.getElementById("menu-btn-inventory").addEventListener("click", ManageSubMenu);
     document.getElementById("menu-btn-locations").addEventListener("click", ManageSubMenu);
+    
   }
   else {
 
@@ -400,7 +488,6 @@ function createLocationPermissionPopup() {
   setTimeout(() => {
     // Add event listeners
     document.querySelector("#allow-location").addEventListener("click", () => {
-      console.log("TEST");
       
       document.body.removeChild(popup)
       global_box.className = "global_box";
@@ -429,15 +516,7 @@ function createLocationPermissionPopup() {
 
 }
 
-const GeolocateControl = new mapboxgl.GeolocateControl({
-  positionOptions: {
-    enableHighAccuracy: true,
-  },
-  // When active the map will receive updates to the device's location as it changes.
-  trackUserLocation: true,
-  // Draw an arrow next to the location dot to indicate which direction the device is heading.
-  showUserHeading: true,
-})
+
 function succesWatchPosition() {
 
   try {
@@ -453,17 +532,10 @@ function succesWatchPosition() {
 
       const poiCoords = poi.geometry.coordinates;
       const distance = calculateDistance(pos, poiCoords);
-      // console.log("poiCoords: ", poiCoords);
-      // console.info("poi.properties.visible: ", poi.properties.visible);
-      
-      
-      // Update visibility based on proximity
- 
+
       poi.properties.visible = distance < 30;
       if (poi.properties.visible) {
-        // Discovered new ressource
-
-        NewPopup("ressource-found", poi);
+        gameSave.visitedPois.push([poi.properties.id, poiCoords]);
       }
 
     });
@@ -479,10 +551,7 @@ function succesWatchPosition() {
   }
 
 }
-let lastPos = {
-  lat: 0,
-  long: 0
-};
+
 // Function to update user position on map
 function updateUserPositionOnMap(position) {
   pos = {
@@ -510,7 +579,41 @@ function updateUserPositionOnMap(position) {
     map.userLocationInitialized = true
   }
 }
+function ExportGameSave(gameSaveInstance) {
+    const dataStr = JSON.stringify(gameSaveInstance, null, 2);
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
 
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "sauvegarde.json";
+    a.click();
+
+    URL.revokeObjectURL(url);
+}
+
+
+function ImportGameSave(callback) {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "application/json";
+
+    input.onchange = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const text = await file.text();
+        const data = JSON.parse(text);
+
+        const importedGameSave = new GameSave();
+        importedGameSave.SetGameSave(data.inventory, data.visitedPois, data.inventoryCapacity);
+
+        callback(importedGameSave);
+    };
+
+    input.click();
+    input.remove();
+}
 // Start tracking user location
 function startLocationTracking() {
   if ("geolocation" in navigator) {
